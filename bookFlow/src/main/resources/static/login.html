@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş - Kişisel Kütüphanem</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #f4f1ea;
+            --primary-color: #6b4226;
+            --accent-color: #d4a373;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;
+        }
+        .login-card {
+            background: white; padding: 40px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(107, 66, 38, 0.1); width: 100%; max-width: 420px;
+            border: 1px solid #e0d8c3; position: relative;
+        }
+        h3 { font-family: 'Merriweather', serif; color: var(--primary-color); }
+        
+        .form-control {
+            border: 1px solid #d4a373; padding: 12px;
+        }
+        .form-control:focus {
+            border-color: var(--primary-color); box-shadow: 0 0 5px rgba(107, 66, 38, 0.3);
+        }
+        
+        .btn-custom {
+            background-color: var(--primary-color); color: white; border: none; 
+            font-weight: 600; padding: 12px; transition: 0.3s;
+        }
+        .btn-custom:hover { background-color: #54321a; color: white; }
+        
+        .toggle-text {
+            text-align: center; margin-top: 15px; font-size: 0.9em; color: #666;
+        }
+        .toggle-link {
+            color: var(--accent-color); font-weight: 600; cursor: pointer; text-decoration: none;
+        }
+        .toggle-link:hover { text-decoration: underline; color: var(--primary-color); }
+        
+        .d-none { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    
+    <div id="loginSection">
+        <h3 class="text-center mb-4"><i class="fas fa-book-open"></i> Giriş Yap</h3>
+        <form onsubmit="handleLogin(event)">
+            <div class="mb-3">
+                <input type="email" id="loginMail" class="form-control" placeholder="E-Posta Adresi" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" id="loginPass" class="form-control" placeholder="Şifre" required>
+            </div>
+            <button type="submit" class="btn btn-custom w-100">Kütüphanemi Aç</button>
+        </form>
+        <div class="toggle-text">
+            Henüz kütüphanen yok mu? <span class="toggle-link" onclick="toggleForms()">Hemen Kayıt Ol</span>
+        </div>
+    </div>
+
+    <div id="registerSection" class="d-none">
+        <h3 class="text-center mb-4"><i class="fas fa-feather-alt"></i> Kayıt Ol</h3>
+        <form onsubmit="handleRegister(event)">
+            <div class="row mb-3">
+                <div class="col">
+                    <input type="text" id="regName" class="form-control" placeholder="Ad" required>
+                </div>
+                <div class="col">
+                    <input type="text" id="regSurname" class="form-control" placeholder="Soyad" required>
+                </div>
+            </div>
+            <div class="mb-3">
+                <input type="email" id="regMail" class="form-control" placeholder="E-Posta Adresi" required>
+            </div>
+            <div class="mb-3">
+                <input type="password" id="regPass" class="form-control" placeholder="Şifre" required>
+            </div>
+            <button type="submit" class="btn btn-custom w-100" style="background-color: var(--accent-color);">Kaydı Tamamla</button>
+        </form>
+        <div class="toggle-text">
+            Zaten üye misin? <span class="toggle-link" onclick="toggleForms()">Giriş Yap</span>
+        </div>
+    </div>
+
+    <div id="msgBox" class="text-center mt-3 fw-bold" style="font-size:0.9em; display:none;"></div>
+</div>
+
+<script>
+    function toggleForms() {
+        document.getElementById('loginSection').classList.toggle('d-none');
+        document.getElementById('registerSection').classList.toggle('d-none');
+        document.getElementById('msgBox').style.display = 'none';
+    }
+
+    // --- LOGİN ---
+    async function handleLogin(e) {
+        e.preventDefault();
+        const mail = document.getElementById('loginMail').value;
+        const password = document.getElementById('loginPass').value;
+
+        try {
+            const res = await fetch('http://localhost:8080/rest/api/user/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mail, password })
+            });
+
+            if (res.ok) {
+                const user = await res.json();
+                if(user && user.id) {
+                    localStorage.setItem('userId', user.id);
+                    localStorage.setItem('userName', user.firstName + ' ' + user.lastName);
+                    localStorage.setItem('isAdmin', user.admin); 
+                    window.location.href = 'index.html';
+                }
+            } else {
+                // Backend'den gelen JSON hatasını oku
+                const errorData = await res.json();
+                
+                // Senin yapın: ApiError -> Exception -> message
+                if(errorData.exception && errorData.exception.message) {
+                    showMsg(errorData.exception.message, "red");
+                } else {
+                    showMsg("Giriş başarısız. Bilgilerini kontrol et.", "red");
+                }
+            }
+        } catch (err) { showMsg("Sunucuya bağlanılamadı.", "red"); }
+    }
+
+    // --- KAYIT (REGISTER) ---
+    async function handleRegister(e) {
+        e.preventDefault();
+        const data = {
+            firstName: document.getElementById('regName').value,
+            lastName: document.getElementById('regSurname').value,
+            mail: document.getElementById('regMail').value,
+            password: document.getElementById('regPass').value
+        };
+
+        try {
+            const res = await fetch('http://localhost:8080/rest/api/user/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if(res.ok) {
+                showMsg("Kayıt başarılı! Giriş yapabilirsin.", "green");
+                setTimeout(() => toggleForms(), 1500);
+            } else {
+                // --- BURASI KRİTİK NOKTA ---
+                // Backend 400 Bad Request döndüğünde buraya girer
+                const errorData = await res.json(); 
+                
+                // Senin Class yapına göre mesajı buradan çekiyoruz:
+                if(errorData.exception && errorData.exception.message) {
+                    showMsg(errorData.exception.message, "red");
+                } else {
+                    showMsg("Kayıt başarısız.", "red");
+                }
+            }
+        } catch (err) { 
+            console.error(err);
+            showMsg("Sunucu hatası oluştu.", "red"); 
+        }
+    }
+
+    function showMsg(text, color) {
+        const box = document.getElementById('msgBox');
+        box.innerText = text;
+        box.style.color = color;
+        box.style.display = 'block';
+    }
+</script>
+</body>
+</html>

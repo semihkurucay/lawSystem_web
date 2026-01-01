@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kişisel Kütüphanem</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        /* --- TASARIM DEĞİŞKENLERİ --- */
+        :root {
+            --bg-color: #f4f1ea;
+            --primary-color: #6b4226;
+            --accent-color: #d4a373;
+            --text-color: #333;
+        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; }
+        h1, h2, h3, h5 { font-family: 'Merriweather', serif; color: var(--primary-color); }
+
+        /* Hero Header */
+        .hero {
+            background: linear-gradient(rgba(107, 66, 38, 0.9), rgba(107, 66, 38, 0.8)), url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover; background-position: center; color: #fff;
+            padding: 60px 20px; text-align: center; border-bottom: 5px solid var(--accent-color);
+        }
+
+        /* ADMIN PANELİ */
+        .admin-panel {
+            background-color: #fff; border: 2px dashed var(--accent-color);
+            border-radius: 12px; padding: 25px; text-align: center;
+            display: none; margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        /* Sekmeler ve Kartlar */
+        .nav-tabs { border-bottom: 2px solid #e0d8c3; margin-bottom: 30px; }
+        .nav-link { color: var(--primary-color); font-weight: 600; border: none; }
+        .nav-link:hover { color: var(--accent-color); }
+        .nav-link.active { background-color: transparent !important; color: var(--primary-color) !important; border-bottom: 3px solid var(--primary-color) !important; }
+
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 30px; }
+        .book-card {
+            background: #fff; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08); transition: transform 0.3s ease;
+            border: 1px solid #e0d8c3; display: flex; flex-direction: column; position: relative;
+        }
+        .book-card:hover { transform: translateY(-8px); box-shadow: 0 12px 25px rgba(0,0,0,0.15); }
+        .book-cover-placeholder { height: 160px; background: var(--accent-color); display: flex; justify-content: center; align-items: center; color: #fff; font-size: 3em; opacity: 0.9; }
+        .book-info { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .book-title { font-size: 1.1em; margin: 0 0 10px 0; line-height: 1.3; height: 50px; overflow: hidden; }
+        .book-writer { color: #777; font-weight: 500; margin-bottom: 10px; font-size: 0.9em; }
+        .book-meta { display: flex; justify-content: space-between; color: #999; font-size: 0.85em; margin-bottom: 15px; }
+
+        /* Butonlar */
+        .btn-action { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: background 0.2s; color: #fff; margin-top: auto; }
+        .btn-start { background-color: var(--primary-color); }
+        .btn-start:hover { background-color: #54321a; }
+        .btn-update { background-color: #2e7d32; } 
+        .btn-update:hover { background-color: #1b5e20; }
+        .progress-container { margin: 10px 0 15px 0; background: #e0d8c3; border-radius: 10px; height: 8px; overflow: hidden; }
+        .progress-bar { background-color: #2e7d32; height: 100%; width: 0%; transition: width 0.5s; }
+        
+        /* MODAL STİLİ */
+        .modal-content { background-color: var(--bg-color); border: 2px solid var(--primary-color); border-radius: 15px; }
+        .modal-header { background-color: var(--primary-color) !important; border-bottom: none; padding: 1.5rem; }
+        .modal-header .modal-title { color: #ffffff !important; font-family: 'Merriweather', serif; font-weight: 700; }
+        .btn-close-white { filter: invert(1) grayscale(100%) brightness(200%); opacity: 0.8; }
+        .btn-close-white:hover { opacity: 1; }
+        .btn-confirm { background-color: var(--accent-color); color: white; border: none; }
+        .btn-confirm:hover { background-color: #b58b5f; color: white; }
+        .btn-success { background-color: #2e7d32; border: none; }
+        .btn-success:hover { background-color: #1b5e20; }
+    </style>
+</head>
+<body>
+
+    <header class="hero">
+        <h1><i class="fas fa-book-open me-2"></i> Kişisel Kütüphanem</h1>
+        <p>Hoş geldin, <span id="userNameDisplay">Okur</span>. Yolculuğun nasıl gidiyor?</p>
+        
+        <div class="mt-3">
+            <button onclick="openProfileModal()" class="btn btn-sm btn-outline-light me-2"><i class="fas fa-user-circle"></i> Profilim</button>
+            <button onclick="logout()" class="btn btn-sm btn-outline-light"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div id="adminPanelArea" class="admin-panel">
+            <h5 class="mb-4" style="color:var(--primary-color)"><i class="fas fa-crown"></i> Yönetici Paneli</h5>
+            <div class="d-flex justify-content-center gap-4 flex-wrap">
+                <button class="btn btn-confirm px-4 py-2" onclick="openManageWritersModal()">
+                    <i class="fas fa-feather-alt me-2"></i>Yazar Yönetimi
+                </button>
+                <button class="btn btn-confirm px-4 py-2" onclick="openManageBooksModal()">
+                    <i class="fas fa-book me-2"></i>Kitap Yönetimi
+                </button>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs justify-content-center" id="myTab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" id="library-tab" data-bs-toggle="tab" data-bs-target="#library-pane" onclick="fetchAllBooks()"><i class="fas fa-search"></i> Tüm Kitaplar</button></li>
+            <li class="nav-item"><button class="nav-link" id="mybooks-tab" data-bs-toggle="tab" data-bs-target="#mybooks-pane" onclick="fetchMyReadings()"><i class="fas fa-bookmark"></i> Okuduklarım</button></li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="library-pane">
+                <div id="allBooksGrid" class="book-grid"><div class="text-center w-100 p-5 text-muted">Kitaplar yükleniyor...</div></div>
+            </div>
+            <div class="tab-pane fade" id="mybooks-pane">
+                <div id="myReadingsGrid" class="book-grid"><div class="text-center w-100 p-5 text-muted">Raflarına bakılıyor...</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="startReadingModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Kitaba Başla</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center p-4">
+                    <h4 id="modalBookTitle" class="mb-3">Kitap Adı</h4>
+                    <p class="text-muted">Bu kitabı okuma listene eklemek istiyor musun?</p>
+                    <input type="hidden" id="modalBookId">
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-confirm px-4" onclick="confirmStartReading()">Evet, Ekle</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="updateModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #2e7d32 !important;"><h5 class="modal-title">İlerleme Kaydet</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <label class="form-label">Şu an kaçıncı sayfadasın?</label>
+                    <div class="input-group mb-3">
+                        <input type="number" id="newPageInput" class="form-control" placeholder="Sayfa No">
+                        <span class="input-group-text" id="modalTotalPageDisplay">/ ???</span>
+                    </div>
+                    <input type="hidden" id="updateReadingId"><input type="hidden" id="hiddenTotalPage">
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-success px-4" onclick="confirmUpdate()">Kaydet</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addWriterModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Yeni Yazar Ekle</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <label>Yazar Adı:</label><input type="text" id="writerName" class="form-control mb-3">
+                    <label>Doğum Tarihi:</label><input type="date" id="writerBirth" class="form-control mb-3">
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-confirm" onclick="saveWriter()">Kaydet</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addBookModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Yeni Kitap Ekle</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <label>Kitap Adı:</label> <input type="text" id="bookTitle" class="form-control mb-2">
+                    <label>Sayfa Sayısı:</label> <input type="number" id="bookPage" class="form-control mb-2">
+                    <label>Basım Yılı:</label> <input type="number" id="bookYear" class="form-control mb-2">
+                    <label>Yazar Seç:</label><select id="writerSelect" class="form-select mb-2"><option>Yükleniyor...</option></select>
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-confirm" onclick="saveBook()">Kaydet</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="profileModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Profil Bilgilerim</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <div class="row mb-3"><div class="col"><label>Ad:</label><input type="text" id="profName" class="form-control"></div><div class="col"><label>Soyad:</label><input type="text" id="profSurname" class="form-control"></div></div>
+                    <div class="mb-3"><label>E-Posta:</label><input type="email" id="profMail" class="form-control"></div>
+                    <div class="mb-3"><label>Şifre:</label><input type="password" id="profPass" class="form-control" placeholder="Mevcut veya yeni şifre"></div>
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-confirm px-4" onclick="updateProfile()">Güncelle</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="manageWritersModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Yazar Yönetimi</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <span class="fw-bold" style="color:var(--primary-color)">Kayıtlı Yazarlar</span>
+                        <button class="btn btn-sm btn-success" onclick="openAddWriterModal()"><i class="fas fa-plus me-1"></i> Yeni Yazar Ekle</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light"><tr><th>Ad</th><th>Doğum Tarihi</th><th class="text-end">İşlemler</th></tr></thead>
+                            <tbody id="writersListBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="manageBooksModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Kitap Yönetimi</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                        <span class="fw-bold" style="color:var(--primary-color)">Kayıtlı Kitaplar</span>
+                        <button class="btn btn-sm btn-success" onclick="openAddBookModal()"><i class="fas fa-plus me-1"></i> Yeni Kitap Ekle</button>
+                    </div>
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light"><tr><th>Kitap Adı</th><th>Yazar</th><th>Sayfa</th><th class="text-end">İşlemler</th></tr></thead>
+                            <tbody id="booksListBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="updateWriterModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #ffc107 !important;"><h5 class="modal-title text-dark">Yazar Düzenle</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="editWriterId">
+                    <label>Yazar Adı:</label><input type="text" id="editWriterName" class="form-control mb-3">
+                    <label>Doğum Tarihi:</label><input type="date" id="editWriterBirth" class="form-control mb-3">
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-warning" onclick="confirmUpdateWriter()">Güncelle</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="updateBookModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #ffc107 !important;"><h5 class="modal-title text-dark">Kitap Düzenle</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="editBookId">
+                    <label>Kitap Adı:</label><input type="text" id="editBookTitle" class="form-control mb-2">
+                    <label>Sayfa Sayısı:</label><input type="number" id="editBookPage" class="form-control mb-2">
+                    <label>Basım Yılı:</label><input type="number" id="editBookYear" class="form-control mb-2">
+                    <label>Yazar (Değiştirmek için seçin):</label>
+                    <select id="editBookWriterSelect" class="form-select mb-2"><option value="">Mevcut Kalsın</option></select>
+                </div>
+                <div class="modal-footer justify-content-center"><button class="btn btn-warning" onclick="confirmUpdateBook()">Güncelle</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const userId = localStorage.getItem('userId');
+    const userName = localStorage.getItem('userName');
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    if (!userId) { window.location.href = 'login.html'; } 
+    else {
+        document.getElementById('userNameDisplay').innerText = userName;
+        if(isAdmin) document.getElementById('adminPanelArea').style.display = 'block';
+        fetchAllBooks();
+    }
+
+    function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+    // --- HATA YÖNETİMİ ---
+    async function handleResponse(res, successMsg) {
+        if (res.ok) {
+            alert(successMsg);
+            location.reload();
+        } else {
+            try {
+                const errorData = await res.json();
+                if (errorData.exception && errorData.exception.message) {
+                    const msg = errorData.exception.message;
+                    if (typeof msg === 'object') {
+                        let output = "Lütfen düzeltin:\n";
+                        for (let field in msg) output += "- " + msg[field].toString().replace("[", "").replace("]", "") + "\n";
+                        alert(output);
+                    } else alert("UYARI: " + msg);
+                } else alert("İşlem başarısız!");
+            } catch (e) { alert("Sunucu hatası."); }
+        }
+    }
+
+    // --- PROFİL ---
+    async function openProfileModal() {
+        const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+        try {
+            const res = await fetch(`http://localhost:8080/rest/api/user/get/${userId}`);
+            if(res.ok) {
+                const user = await res.json();
+                document.getElementById('profName').value = user.firstName;
+                document.getElementById('profSurname').value = user.lastName;
+                document.getElementById('profMail').value = user.mail;
+                document.getElementById('profPass').value = "";
+                modal.show();
+            }
+        } catch(e) { alert("Hata."); }
+    }
+
+    async function updateProfile() {
+        const pass = document.getElementById('profPass').value;
+        if (!pass) { alert("Şifre gerekli."); return; }
+        const data = {
+            firstName: document.getElementById('profName').value,
+            lastName: document.getElementById('profSurname').value,
+            mail: document.getElementById('profMail').value,
+            password: pass
+        };
+        const res = await fetch(`http://localhost:8080/rest/api/user/update/${userId}`, {
+            method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data)
+        });
+        if(res.ok) {
+            localStorage.setItem('userName', data.firstName + ' ' + data.lastName);
+            document.getElementById('userNameDisplay').innerText = data.firstName + ' ' + data.lastName;
+        }
+        handleResponse(res, "Profil güncellendi!");
+    }
+
+    // --- YÖNETİCİ: YAZAR İŞLEMLERİ ---
+    function openAddWriterModal() {
+        bootstrap.Modal.getInstance(document.getElementById('manageWritersModal')).hide();
+        new bootstrap.Modal(document.getElementById('addWriterModal')).show();
+    }
+
+    async function saveWriter() {
+        const data = { name: document.getElementById('writerName').value, birthDate: document.getElementById('writerBirth').value };
+        const res = await fetch('http://localhost:8080/rest/api/writer/save', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        handleResponse(res, "Yazar eklendi!");
+    }
+
+    async function openManageWritersModal() {
+        const modal = new bootstrap.Modal(document.getElementById('manageWritersModal'));
+        const tbody = document.getElementById('writersListBody');
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center">Yükleniyor...</td></tr>';
+        modal.show();
+
+        try {
+            const res = await fetch('http://localhost:8080/rest/api/writer/list');
+            const writers = await res.json();
+            tbody.innerHTML = "";
+            if(writers.length === 0) tbody.innerHTML = '<tr><td colspan="3" class="text-center">Kayıtlı yazar yok.</td></tr>';
+            
+            writers.forEach(w => {
+                let bDate = w.birthDate ? w.birthDate : "-";
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${w.name}</td>
+                        <td>${bDate}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-warning me-1" onclick="openUpdateWriterModal(${w.id}, '${w.name}', '${w.birthDate}')"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteWriter(${w.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        } catch(e) { tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Bağlantı hatası.</td></tr>'; }
+    }
+
+    async function deleteWriter(id) {
+        if(!confirm("Bu yazarı ve tüm kitaplarını silmek istediğine emin misin?")) return;
+        const res = await fetch(`http://localhost:8080/rest/api/writer/delete/${id}`, { method: 'DELETE' });
+        handleResponse(res, "Yazar ve ilişkili kayıtlar silindi!");
+    }
+
+    function openUpdateWriterModal(id, name, birth) {
+        bootstrap.Modal.getInstance(document.getElementById('manageWritersModal')).hide();
+        document.getElementById('editWriterId').value = id;
+        document.getElementById('editWriterName').value = name;
+        document.getElementById('editWriterBirth').value = birth;
+        new bootstrap.Modal(document.getElementById('updateWriterModal')).show();
+    }
+
+    async function confirmUpdateWriter() {
+        const id = document.getElementById('editWriterId').value;
+        const data = { name: document.getElementById('editWriterName').value, birthDate: document.getElementById('editWriterBirth').value };
+        const res = await fetch(`http://localhost:8080/rest/api/writer/update/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        handleResponse(res, "Yazar güncellendi!");
+    }
+
+    // --- YÖNETİCİ: KİTAP İŞLEMLERİ (GÜNCELLENDİ) ---
+    
+    // Kitap Yönetimi Modalını Aç
+    async function openManageBooksModal() {
+        const modal = new bootstrap.Modal(document.getElementById('manageBooksModal'));
+        const tbody = document.getElementById('booksListBody');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center">Yükleniyor...</td></tr>';
+        modal.show();
+
+        try {
+            const res = await fetch('http://localhost:8080/rest/api/book/list');
+            const books = await res.json();
+            tbody.innerHTML = "";
+            if(books.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center">Kayıtlı kitap yok.</td></tr>';
+
+            books.forEach(b => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${b.title}</td>
+                        <td>${b.writerName}</td>
+                        <td>${b.pageCount}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-warning me-1" onclick="openUpdateBookModal(${b.id}, '${b.title}', ${b.pageCount}, ${b.year})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteBook(${b.id})"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+        } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Hata.</td></tr>'; }
+    }
+
+    // Yazarları çekip select'e dolduran yardımcı fonksiyon
+    async function fillWriters(selectId) {
+        const select = document.getElementById(selectId);
+        select.innerHTML = '<option>Yükleniyor...</option>';
+        try {
+            const res = await fetch('http://localhost:8080/rest/api/writer/list');
+            const writers = await res.json();
+            select.innerHTML = '<option value="">Yazar Seçiniz...</option>';
+            writers.forEach(w => select.innerHTML += `<option value="${w.id}">${w.name}</option>`);
+        } catch(e) { select.innerHTML = '<option>Yazarlar yüklenemedi!</option>'; }
+    }
+
+    function openAddBookModal() {
+        // Eğer kitap yönetimi modali açıksa kapat
+        try { bootstrap.Modal.getInstance(document.getElementById('manageBooksModal')).hide(); } catch(e){}
+        new bootstrap.Modal(document.getElementById('addBookModal')).show();
+        fillWriters('writerSelect');
+    }
+
+    async function saveBook() {
+        const data = { title: document.getElementById('bookTitle').value, pageCount: document.getElementById('bookPage').value, year: document.getElementById('bookYear').value, writerId: document.getElementById('writerSelect').value };
+        const res = await fetch('http://localhost:8080/rest/api/book/save', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        handleResponse(res, "Kitap eklendi!");
+    }
+
+    async function deleteBook(id) {
+        if(!confirm("Bu kitabı silmek istiyor musun?")) return;
+        const res = await fetch(`http://localhost:8080/rest/api/book/delete/${id}`, { method: 'DELETE' });
+        handleResponse(res, "Kitap silindi!");
+    }
+
+    async function openUpdateBookModal(id, title, page, year) {
+        try { bootstrap.Modal.getInstance(document.getElementById('manageBooksModal')).hide(); } catch(e){}
+        
+        document.getElementById('editBookId').value = id;
+        document.getElementById('editBookTitle').value = title;
+        document.getElementById('editBookPage').value = page;
+        document.getElementById('editBookYear').value = year;
+        
+        await fillWriters('editBookWriterSelect'); 
+        new bootstrap.Modal(document.getElementById('updateBookModal')).show();
+    }
+
+    async function confirmUpdateBook() {
+        const id = document.getElementById('editBookId').value;
+        const writerId = document.getElementById('editBookWriterSelect').value;
+        
+        const data = { 
+            title: document.getElementById('editBookTitle').value, 
+            pageCount: document.getElementById('editBookPage').value, 
+            year: document.getElementById('editBookYear').value,
+            writerId: writerId 
+        };
+        
+        if(!writerId) { alert("Lütfen bir yazar seçin."); return; }
+
+        const res = await fetch(`http://localhost:8080/rest/api/book/update/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+        handleResponse(res, "Kitap güncellendi!");
+    }
+
+
+    // --- LİSTELEME ---
+    async function fetchAllBooks() {
+        try {
+            const res = await fetch('http://localhost:8080/rest/api/book/list');
+            const books = await res.json();
+            const grid = document.getElementById('allBooksGrid');
+            grid.innerHTML = "";
+            document.getElementById('library-tab').innerHTML = `<i class="fas fa-search"></i> Tüm Kitaplar (${books.length})`;
+
+            books.forEach(book => {
+                grid.innerHTML += `
+                    <div class="book-card">
+                        <div class="book-cover-placeholder"><i class="fas fa-book"></i></div>
+                        <div class="book-info">
+                            <h3 class="book-title">${book.title}</h3>
+                            <div class="book-writer">By ${book.writerName}</div>
+                            <div class="book-meta"><span>${book.pageCount} Sayfa</span><span>${book.year}</span></div>
+                            <button class="btn-action btn-start mt-2" onclick="openStartModal(${book.id}, '${book.title}')"><i class="fas fa-plus"></i> Okumaya Başla</button>
+                        </div>
+                    </div>`;
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    async function fetchMyReadings() {
+        try {
+            const res = await fetch(`http://localhost:8080/rest/api/reading/list/${userId}`);
+            const readings = await res.json();
+            const grid = document.getElementById('myReadingsGrid');
+            grid.innerHTML = "";
+            if(readings.length === 0) { grid.innerHTML = `<div class="text-center w-100 p-4">Henüz eklemedin.</div>`; return; }
+
+            readings.forEach(r => {
+                let color = r.percentage >= 100 ? "#6c757d" : "#2e7d32";
+                let btn = r.percentage >= 100 
+                    ? `<button class="btn-action" style="background-color:${color};cursor:default;" disabled><i class="fas fa-check-circle"></i> Okundu</button>`
+                    : `<button class="btn-action btn-update" onclick="openUpdateModal(${r.id}, ${r.totalPage})"><i class="fas fa-edit"></i> Güncelle</button>`;
+                
+                grid.innerHTML += `
+                <div class="book-card">
+                    <div class="book-cover-placeholder" style="background-color:${color};"><i class="fas fa-book-reader"></i></div>
+                    <div class="book-info">
+                        <h3>${r.bookTitle}</h3>
+                        <div class="book-writer">By ${r.writerName||'Yazar'}</div>
+                        <div class="d-flex justify-content-between text-muted mt-2"><span>${r.currentPage}/${r.totalPage}</span><span>%${r.percentage}</span></div>
+                        <div class="progress-container"><div class="progress-bar" style="width:${r.percentage}%;background-color:${color};"></div></div>
+                        ${btn}
+                    </div>
+                </div>`;
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    // MODAL ACTIONS
+    function openStartModal(bid, title) { document.getElementById('modalBookTitle').innerText=title; document.getElementById('modalBookId').value=bid; new bootstrap.Modal(document.getElementById('startReadingModal')).show(); }
+    async function confirmStartReading() {
+        const data = { userId: userId, bookId: document.getElementById('modalBookId').value, currentPage: 0, percentage: 0 };
+        const res = await fetch('http://localhost:8080/rest/api/reading/save', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+        handleResponse(res, "Listeye eklendi!");
+    }
+    function openUpdateModal(rid, total) { document.getElementById('updateReadingId').value=rid; document.getElementById('hiddenTotalPage').value=total; document.getElementById('modalTotalPageDisplay').innerText="/ "+total; document.getElementById('newPageInput').value=""; new bootstrap.Modal(document.getElementById('updateModal')).show(); }
+    async function confirmUpdate() {
+        const rid = document.getElementById('updateReadingId').value;
+        const total = parseInt(document.getElementById('hiddenTotalPage').value);
+        const page = parseInt(document.getElementById('newPageInput').value);
+        if(!page || page < 0) { alert("Geçersiz sayfa."); return; }
+        if(page > total) { alert("Sayfa sayısı aşıldı!"); return; }
+        const data = { currentPage: page, percentage: Math.floor((page/total)*100) };
+        const res = await fetch(`http://localhost:8080/rest/api/reading/update/${rid}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+        handleResponse(res, "Kaydedildi!");
+    }
+</script>
+</body>
+</html>
